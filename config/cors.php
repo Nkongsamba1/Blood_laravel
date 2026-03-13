@@ -15,17 +15,17 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie','logout'],
 
     'allowed_methods' => ['*'],
 // OU plus sécurisé :
-'allowed_origins' => ['http://localhost:8080', 'http://127.0.0.1:8080', 'http://localhost:5173', 'http://127.0.0.1:8000'],
+'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => [''],
 
     'max_age' => 0,
 

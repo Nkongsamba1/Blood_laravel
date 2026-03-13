@@ -62,7 +62,7 @@ Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-    Route::get('/donneur/dashboard', [DonneurController::class, 'getDashboardData']);
+    
 Route::post('/campagnes', [CampagneController::class, 'store']);
 Route::get('/campagnes', [CampagneController::class, 'index']);
 Route::put('/campagnes/{id}', [CampagneController::class, 'update']);

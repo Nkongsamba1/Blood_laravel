@@ -13,6 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi(); // <--- INDISPENSABLE pour Sanctum en Laravel 11
+        // AJOUTE CECI : Exclure les routes API de la vérification CSRF
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/connexion',
+            'api/inscription',
+            'api/donneur/*',
+        ]);
 
         $middleware->alias([
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,

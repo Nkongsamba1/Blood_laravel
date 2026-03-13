@@ -13,6 +13,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi(); // <--- INDISPENSABLE pour Sanctum en Laravel 11
+
+        // AJOUTE CE BLOC ICI :
+        $middleware->redirectGuestsTo(fn () => response()->json([
+            'message' => 'Unauthenticated.'
+        ], 401));
+
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+
         // AJOUTE CECI : Exclure les routes API de la vérification CSRF
         $middleware->validateCsrfTokens(except: [
             'api/*',

@@ -14,6 +14,13 @@ use App\Http\Controllers\Api\BloodStockController;
 
 Route::get('/stocks', [BloodStockController::class, 'index']);
 
+    Route::get('/test-auth', function (Request $request) {
+    return response()->json([
+        'header' => $request->header('Authorization'),
+        'user' => $request->user(), // Si c'est null, le token est rejeté
+    ]);
+})->middleware('auth:sanctum');
+
     Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/donneur/dashboard', [DonneurController::class, 'getDashboardData']);
@@ -62,7 +69,7 @@ Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-    
+
 Route::post('/campagnes', [CampagneController::class, 'store']);
 Route::get('/campagnes', [CampagneController::class, 'index']);
 Route::put('/campagnes/{id}', [CampagneController::class, 'update']);

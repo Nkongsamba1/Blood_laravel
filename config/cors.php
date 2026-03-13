@@ -19,7 +19,8 @@ return [
 
     'allowed_methods' => ['*'],
 // OU plus sécurisé :
-'allowed_origins' => ['*'],
+'allowed_origins' => ['https://blood-5frzrbgbj-djeukouhugues0505-8791s-projects.vercel.app',
+    'http://localhost:8080'], // Garde le local pour tes tests],
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +30,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];

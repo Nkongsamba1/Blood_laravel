@@ -54,6 +54,9 @@ public function getDashboardStats()
             ->orderBy('date_brute', 'ASC')
             ->limit(10)
             ->get();
+            // ON PRÉPARE LES DEUX TABLEAUX DISTINCTS
+        $labels = $stats->map(fn($item) => \Carbon\Carbon::parse($item->date_brute)->translatedFormat('d M'));
+        $counts = $stats->map(fn($item) => (int) $item->count);
 
         // On formate proprement pour le frontend (ex: "14 Mar")
         $formattedStats = $stats->map(function ($item) {
@@ -63,7 +66,11 @@ public function getDashboardStats()
             ];
         });
 
-        return response()->json($formattedStats);
+        return response()->json([
+                    'labels'          => $labels,          // Pour l'axe X (les dates)
+                    'counts'          => $counts,          // Pour l'axe Y (les chiffres)
+                    'formattedStats'  => $formattedStats   // On garde ton format actuel au cas où
+                ]);
     } catch (\Exception $e) {
         // On log l'erreur exacte dans Railway pour que tu puisses la voir
         Log::error("Erreur Graphique Personnel: " . $e->getMessage());

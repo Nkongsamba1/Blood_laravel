@@ -217,7 +217,7 @@ public function getFileAttente()
 
 }
 
-    public function getMe(Request $request)
+    public function getPersonnelProfils(Request $request)
     {
         $user = $request->user();
 

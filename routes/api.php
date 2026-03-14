@@ -12,6 +12,16 @@ use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Api\BloodStockController;
 
+Route::get('/test-network', function () {
+    $connection = @fsockopen('smtp.gmail.com', 587, $errno, $errstr, 5);
+    if ($connection) {
+        fclose($connection);
+        return "✅ Connexion à Gmail RÉUSSIE sur le port 587 !";
+    } else {
+        return "❌ Connexion à Gmail ÉCHOUÉE : $errstr ($errno)";
+    }
+});
+
 Route::get('/stocks', [BloodStockController::class, 'index']);
 
     Route::get('/test-auth', function (Request $request) {

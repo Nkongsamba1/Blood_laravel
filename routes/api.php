@@ -12,6 +12,22 @@ use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Api\BloodStockController;
 
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/force-queue', function () {
+    // Cette commande va essayer de renvoyer tous les mails qui ont échoué
+    Artisan::call('queue:retry all');
+
+    // Cette commande lance le travailleur pour traiter les mails en attente
+    // On utilise --once pour ne pas bloquer le navigateur
+    Artisan::call('queue:work --once');
+
+    return response()->json([
+        'message' => 'Les mails ont été relancés vers Resend ! Vérifie tes logs Railway.',
+        'output' => Artisan::output()
+    ]);
+});
+
 Route::get('/test-network', function () {
     $connection = @fsockopen('smtp.gmail.com', 587, $errno, $errstr, 5);
     if ($connection) {

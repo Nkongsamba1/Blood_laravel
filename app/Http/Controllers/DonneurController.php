@@ -180,45 +180,68 @@ public function getDashboardData(Request $request)
      * Réservation d'une campagne de don
      * Correction : utilise 'date_debut' comme date de référence pour le don
      */
-    public function reserverCampagne(Request $request)
-    {
-        $request->validate([
-            'campagne_id' => 'required|exists:campagnes,id',
-            'heure_rdv' => 'required'
-        ]);
+/**
+ * Réservation d'une campagne de don
+ * Gère la date spécifique choisie et la sécurité anti-dates passées
+ */
+public function reserverCampagne(Request $request)
+{
+    // 1. Validation des données entrantes
+    $request->validate([
+        'campagne_id' => 'required|exists:campagnes,id',
+        'heure_rdv'   => 'required',
+        'date_don'    => 'required|date' // La date choisie par le donneur dans le planning
+    ]);
 
-        /** @var User $user */
-        $user = Auth::user();
-        $donneur = $user->donneur;
+    /** @var User $user */
+    $user = Auth::user();
+    $donneur = $user->donneur;
 
-        if (!$donneur) {
-            return response()->json(['message' => 'Profil donneur introuvable'], 404);
-        }
-
-        $campagne = Campagne::findOrFail($request->campagne_id);
-
-        // On vérifie si le donneur n'a pas déjà réservé pour cette campagne
-        $dejaReserve = Don::where('donneur_id', $donneur->donneur_id)
-            ->where('campagne_id', $campagne->id)
-            ->exists();
-
-        if ($dejaReserve) {
-            return response()->json(['message' => 'Vous avez déjà une réservation pour cette campagne'], 422);
-        }
-
-        // Création du don avec statut 'En attente'
-        $don = Don::create([
-            'donneur_id' => $donneur->donneur_id,
-            'campagne_id' => $campagne->id,
-            'date_don' => $campagne->date_debut,
-            'heure_rdv' => $request->heure_rdv,
-            'lieu' => $campagne->lieu,
-            'type_don' => 'Sang Total',
-            'statut' => 'En attente'
-        ]);
-
-        return response()->json(['message' => 'Réservation réussie !', 'don' => $don], 201);
+    if (!$donneur) {
+        return response()->json(['message' => 'Profil donneur introuvable'], 404);
     }
+
+    // 2. Sécurité : Vérifier que la date n'est pas passée
+    // On compare à partir de "aujourd'hui à 00:00"
+    $dateReservation = \Carbon\Carbon::parse($request->date_don)->startOfDay();
+    $aujourdhui = \Carbon\Carbon::now()->startOfDay();
+
+    if ($dateReservation->lt($aujourdhui)) {
+        return response()->json([
+            'message' => 'Impossible de réserver pour une date déjà passée.'
+        ], 422);
+    }
+
+    $campagne = \App\Models\Campagne::findOrFail($request->campagne_id);
+
+    // 3. Vérifier si le donneur n'a pas déjà une réservation active
+    $dejaReserve = \App\Models\Don::where('donneur_id', $donneur->donneur_id)
+        ->where('campagne_id', $campagne->id)
+        ->whereIn('statut', ['En attente', 'Validé'])
+        ->exists();
+
+    if ($dejaReserve) {
+        return response()->json([
+            'message' => 'Vous avez déjà une réservation en cours pour cette campagne.'
+        ], 422);
+    }
+
+    // 4. Création du don (Réservation)
+    $don = \App\Models\Don::create([
+        'donneur_id'  => $donneur->donneur_id,
+        'campagne_id' => $campagne->id,
+        'date_don'    => $request->date_don, // Utilisation de la date sélectionnée
+        'heure_rdv'   => $request->heure_rdv,
+        'lieu'        => $campagne->lieu,
+        'type_don'    => 'Sang Total',
+        'statut'      => 'En attente'
+    ]);
+
+    return response()->json([
+        'message' => 'Réservation réussie !',
+        'don' => $don
+    ], 201);
+}
 
 
     /**

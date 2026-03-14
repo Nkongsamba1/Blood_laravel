@@ -247,6 +247,7 @@ public function getFileAttente()
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'old_password' => 'nullable|string',
             'password' => 'nullable|min:6',
             'photo' => 'nullable|image|max:2048'
         ]);

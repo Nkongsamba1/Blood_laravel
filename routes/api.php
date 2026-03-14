@@ -50,6 +50,10 @@ Route::get('/stocks', [BloodStockController::class, 'index']);
     // --- LE SEUL CHANGEMENT POUR L'ADMIN (STOCK EN LITRES) ---
     Route::get('/admin/stocks', [AdminDashboardController::class, 'getStocks']);
     Route::get('/admin/stats-globales', [AdminDashboardController::class, 'getGlobalStats']);
+    Route::post('/campagnes', [CampagneController::class, 'store']);
+    Route::get('/campagnes', [CampagneController::class, 'index']);
+    Route::put('/campagnes/{id}', [CampagneController::class, 'update']);
+    Route::delete('/campagnes/{id}', [CampagneController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -62,20 +66,25 @@ Route::middleware('auth:sanctum')->group(function () {
         $user->update($request->only('nom_complet', 'email'));
         return response()->json(['user' => $user]);
     });
-});
-
-// Le reste de tes routes sans changement
-Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::get('/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
+// Le reste de tes routes sans changement
+// Route::get('/dashboard', [DashboardController::class, 'index']);
+// Route::get('/users', [UserController::class, 'index']);
+// Route::post('/users', [UserController::class, 'store']);
+// Route::put('/users/{id}', [UserController::class, 'update']);
+// Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
-Route::post('/campagnes', [CampagneController::class, 'store']);
-Route::get('/campagnes', [CampagneController::class, 'index']);
-Route::put('/campagnes/{id}', [CampagneController::class, 'update']);
-Route::delete('/campagnes/{id}', [CampagneController::class, 'destroy']);
+// Route::post('/campagnes', [CampagneController::class, 'store']);
+// Route::get('/campagnes', [CampagneController::class, 'index']);
+// Route::put('/campagnes/{id}', [CampagneController::class, 'update']);
+// Route::delete('/campagnes/{id}', [CampagneController::class, 'destroy']);
 
 Route::get('/stocks', [StockController::class, 'index']);
 

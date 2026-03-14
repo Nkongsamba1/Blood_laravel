@@ -15,10 +15,11 @@ class CampagneController extends Controller
 {
     /**
      * Enregistrer une nouvelle campagne
+     * L'envoi des notifications se fait en arrière-plan
      */
     public function store(Request $request)
     {
-        // On décode le planning s'il arrive sous forme de chaîne JSON (venant du front)
+        // 1. Décodage des données JSON si elles arrivent sous forme de string (fréquent avec FormData)
         if (is_string($request->planning)) {
             $request->merge(['planning' => json_decode($request->planning, true)]);
         }
@@ -26,14 +27,14 @@ class CampagneController extends Controller
             $request->merge(['groupes_cibles' => json_decode($request->groupes_cibles, true)]);
         }
 
-        // 1. Validation des données
+        // 2. Validation des données
         $validator = Validator::make($request->all(), [
             'titre'          => 'required|string|max:255',
             'lieu'           => 'required|string|max:255',
             'date_debut'     => 'required|date',
             'date_fin'       => 'required|date|after_or_equal:date_debut',
             'objectif'       => 'required|integer|min:1',
-            'planning'       => 'required|array', // Maintenant c'est bien un array
+            'planning'       => 'required|array',
             'message'        => 'nullable|string',
             'groupes_cibles' => 'nullable|array',
         ]);
@@ -45,7 +46,7 @@ class CampagneController extends Controller
             ], 422);
         }
 
-        // 2. Création de la campagne
+        // 3. Création de la campagne en base de données
         $campagne = Campagne::create([
             'titre'          => $request->titre,
             'lieu'           => $request->lieu,
@@ -57,8 +58,9 @@ class CampagneController extends Controller
             'groupes_cibles' => $request->groupes_cibles,
         ]);
 
-        // 3. Ciblage des utilisateurs
+        // 4. Ciblage des utilisateurs (Donneurs)
         $query = User::query();
+
         if (!empty($request->groupes_cibles)) {
             $query->whereHas('donneur', function ($q) use ($request) {
                 $q->whereIn('groupe_sanguin', $request->groupes_cibles);
@@ -69,29 +71,27 @@ class CampagneController extends Controller
 
         $users = $query->get();
 
-        // 4. Envoi de la notification
+        // 5. Envoi de la notification en arrière-plan
+        // Grâce à 'implements ShouldQueue' dans la classe NouvelleCampagneNotification,
+        // cette ligne ne bloque pas le serveur et répond immédiatement au front-end.
         if ($users->count() > 0) {
             try {
                 Notification::send($users, new NouvelleCampagneNotification($campagne));
             } catch (\Exception $e) {
-                Log::error("Erreur d'envoi notification : " . $e->getMessage());
-                return response()->json([
-                    'status' => 'partial_success',
-                    'message' => 'Campagne créée, mais erreur SMTP.',
-                    'data' => $campagne
-                ], 201);
+                // On log l'erreur si la mise en file d'attente échoue
+                Log::error("Échec de la mise en file d'attente des notifications : " . $e->getMessage());
             }
         }
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Campagne enregistrée et notifications envoyées !',
+            'message' => 'Campagne enregistrée ! Les notifications sont en cours d\'envoi en arrière-plan.',
             'data'    => $campagne
         ], 201);
     }
 
     /**
-     * Liste des campagnes
+     * Liste des campagnes pour l'administration
      */
     public function index()
     {
@@ -103,13 +103,12 @@ class CampagneController extends Controller
     }
 
     /**
-     * Mise à jour d'une campagne
+     * Mise à jour d'une campagne existante
      */
     public function update(Request $request, $id)
     {
         $campagne = Campagne::findOrFail($id);
 
-        // Décodage si nécessaire pour la validation
         if (is_string($request->planning)) {
             $request->merge(['planning' => json_decode($request->planning, true)]);
         }
@@ -135,24 +134,24 @@ class CampagneController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Campagne mise à jour',
+            'message' => 'Campagne mise à jour avec succès',
             'data' => $campagne
         ]);
     }
 
     /**
-     * Suppression
+     * Supprimer une campagne
      */
     public function destroy($id)
     {
         $campagne = Campagne::findOrFail($id);
         $campagne->delete();
 
-        return response()->json(['message' => 'Supprimé avec succès']);
+        return response()->json(['message' => 'Campagne supprimée avec succès']);
     }
 
     /**
-     * Campagnes disponibles pour les donneurs (Front-end mobile/web)
+     * API pour le calendrier des donneurs
      */
     public function disponibles()
     {

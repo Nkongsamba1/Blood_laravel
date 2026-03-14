@@ -37,6 +37,7 @@ Route::get('/stocks', [BloodStockController::class, 'index']);
 
     // Routes pour l'espace médical
     Route::get('/personnel/profils', [PersonnelController::class, 'getPersonnelProfils']);
+    Route::post('/personnel/update-profile', [PersonnelController::class, 'updateProfile']);
     Route::get('/personnel/dashboard-stats', [PersonnelController::class, 'getDashboardStats']);
     Route::get('/personnel/chart-data', [PersonnelController::class, 'getChartData']);
     Route::get('/personnel/mouvements', [PersonnelController::class, 'getMouvementsRecents']);

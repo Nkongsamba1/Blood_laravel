@@ -20,7 +20,9 @@ return [
     'allowed_methods' => ['*'],
 // OU plus sécurisé :
 'allowed_origins' => ['https://blood-5frzrbgbj-djeukouhugues0505-8791s-projects.vercel.app',
-    'http://localhost:8080'], // Garde le local pour tes tests],
+    'http://localhost:8080',
+    'https://blood-vue.vercel.app',
+], // Garde le local pour tes tests],
 
     'allowed_origins_patterns' => [],
 

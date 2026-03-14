@@ -220,6 +220,14 @@ public function getFileAttente()
     public function getPersonnelProfils(Request $request)
     {
         $user = $request->user();
+        // On prépare l'URL de la photo
+    $photoUrl = null;
+    if ($user->photo) {
+        // Si le chemin contient déjà http, on le garde, sinon on génère l'URL asset
+        $photoUrl = str_contains($user->photo, 'http')
+                    ? $user->photo
+                    : asset('storage/' . $user->photo);
+    }
 
         // Calcul des stats réelles depuis la base de données
         $stats = [
@@ -234,7 +242,7 @@ public function getFileAttente()
                 'name' => $user->nom_complet,
                 'email' => $user->email,
                 'telephone' => $user->telephone ?? 'Non renseigné',
-                'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                'photo' => $photoUrl,
             ],
             'stats' => $stats
         ]);
@@ -261,9 +269,9 @@ public function getFileAttente()
         }
 
         if ($request->hasFile('photo')) {
-            // Supprimer l'ancienne photo si elle existe
-            if ($user->photo) {
-                Storage::disk('public')->delete($user->photo);
+// Supprimer l'ancienne photo physiquement si elle existe
+        if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+            Storage::disk('public')->delete($user->photo);
             }
             $path = $request->file('photo')->store('profils', 'public');
             $user->photo = $path;
@@ -271,7 +279,8 @@ public function getFileAttente()
 
         $user->save();
 
-        return response()->json(['message' => 'Profil mis à jour avec succès', 'user' => $user]);
+        return response()->json(['message' => 'Profil mis à jour avec succès',
+                                 'photo' => asset('storage/'. $user->photo)]);
     }
 }
 

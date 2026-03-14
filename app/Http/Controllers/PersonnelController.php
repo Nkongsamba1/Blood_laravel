@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class PersonnelController extends Controller
 {
@@ -40,24 +41,35 @@ public function getDashboardStats()
     /**
      * Dashboard : Données du graphique d'évolution
      */
-    public function getChartData()
-    {
-        try {
-            $stats = Don::where('statut', 'Effectué')
-                ->select(
-                    DB::raw('DATE_FORMAT(updated_at, "%d %b") as date'),
-                    DB::raw('count(*) as count')
-                )
-                ->groupBy('date')
-                ->orderBy('updated_at', 'ASC')
-                ->limit(10)
-                ->get();
+ public function getChartData()
+{
+    try {
+        // On utilise une syntaxe plus robuste pour le Group By
+        $stats = Don::where('statut', 'Effectué')
+            ->select([
+                DB::raw('DATE(updated_at) as date_brute'),
+                DB::raw('count(*) as count')
+            ])
+            ->groupBy('date_brute')
+            ->orderBy('date_brute', 'ASC')
+            ->limit(10)
+            ->get();
 
-            return response()->json($stats);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Erreur graphique'], 500);
-        }
+        // On formate proprement pour le frontend (ex: "14 Mar")
+        $formattedStats = $stats->map(function ($item) {
+            return [
+                'date' => \Carbon\Carbon::parse($item->date_brute)->translatedFormat('d M'),
+                'count' => (int) $item->count
+            ];
+        });
+
+        return response()->json($formattedStats);
+    } catch (\Exception $e) {
+        // On log l'erreur exacte dans Railway pour que tu puisses la voir
+        Log::error("Erreur Graphique Personnel: " . $e->getMessage());
+        return response()->json(['error' => 'Données indisponibles'], 500);
     }
+}
 
     /**
      * Dashboard : Liste des 8 derniers mouvements

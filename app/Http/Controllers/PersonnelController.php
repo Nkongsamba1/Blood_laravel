@@ -109,7 +109,7 @@ public function getDashboardStats()
 public function getFileAttente()
 {
     $liste = Don::with(['donneur.user'])
-        // ->whereDate('date_don', now()->toDateString()) // Utilise date_don
+        ->whereDate('date_don', now()->toDateString()) // Utilise date_don
         ->whereIn('statut', ['En attente', 'Apte'])
         ->orderBy('heure_rdv', 'asc') // Tri par heure de rendez-vous
         ->get();
